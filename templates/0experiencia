@@ -10,30 +10,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h2>Encuesta de Experiencia</h2>
-        
-        <form id="encuestaForm">
-            <div class="form-group">
-                <label for="Id_Experiencia">ID de Experiencia:</label>
-                <input type="number" class="form-control" id="Id_Experiencia" name="Id_Experiencia" required>
-            </div>
-            <div class="form-group">
-                <label for="Nombre_Apellido">Nombre y Apellido:</label>
-                <input type="text" class="form-control" id="Nombre_Apellido" name="Nombre_Apellido" required minlength="10" maxlength="50">
-            </div>
-            <div class="form-group">
-                <label for="Comentario">Comentario:</label>
-                <textarea class="form-control" id="Comentario" name="Comentario" required minlength="10" maxlength="50"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="Calificacion">Calificación:</label>
-                <input type="number" class="form-control" id="Calificacion" name="Calificacion" required min="0" max="5">
-            </div>
-            <button type="submit" class="btn btn-primary">Calificar</button>
-        </form>
-    </div>
-
     <script>
         // Validación del formulario con jQuery
         $(document).ready(function() {
