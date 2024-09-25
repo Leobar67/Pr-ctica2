@@ -29,7 +29,7 @@ def index():
 def alumnos():
     con.close()
 
-    return render_template("alumnos.html")
+    return render_template("0experiencia.html")
 
 # Ejemplo de ruta POST para ver cómo se envia la informacion
 @app.route("/alumnos/guardar", methods=["POST"])
