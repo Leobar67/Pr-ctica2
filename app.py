@@ -18,7 +18,7 @@ def index():
     return render_template("app.html")
 
 # Ruta para mostrar la vista de experiencia
-@app.route("/experiencia")
+@app.route("/")
 def experiencia():
     return render_template("0experiencia.html")
 
