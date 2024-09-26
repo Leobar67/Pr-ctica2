@@ -46,7 +46,7 @@ def guardar_encuesta():
             app_id="1714541",
             key="2df86616075904231311",
             secret="2f91d936fd43d8e85a1a",
-            cluster="us3",
+            cluster="us4",
             ssl=True
         )
 
