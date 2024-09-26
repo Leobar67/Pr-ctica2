@@ -11,21 +11,21 @@
 <body>
     <div class="container">
         <h2>Encuesta de Experiencia</h2>
-        <form id="encuestaForm">
-            <div class="mb-3">
-                <label for="Nombre_Apellido" class="form-label">Nombre y Apellido:</label>
-                <input type="text" class="form-control" id="Nombre_Apellido" name="Nombre_Apellido" required minlength="10" maxlength="50">
-            </div>
-            <div class="mb-3">
-                <label for="Comentario" class="form-label">Comentario:</label>
-                <textarea class="form-control" id="Comentario" name="Comentario" required minlength="10" maxlength="50"></textarea>
-            </div>
-            <div class="mb-3">
-                <label for="Calificacion" class="form-label">Calificación:</label>
-                <input type="number" class="form-control" id="Calificacion" name="Calificacion" required min="0" max="5">
-            </div>
-            <button type="submit" class="btn btn-primary">Calificar</button>
-        </form>
+<form id="encuestaForm" method="POST" action="/guardar_encuesta">
+    <div class="mb-3">
+        <label for="Nombre_Apellido" class="form-label">Nombre y Apellido:</label>
+        <input type="text" class="form-control" id="Nombre_Apellido" name="Nombre_Apellido" required minlength="10" maxlength="50">
+    </div>
+    <div class="mb-3">
+        <label for="Comentario" class="form-label">Comentario:</label>
+        <textarea class="form-control" id="Comentario" name="Comentario" required minlength="10" maxlength="50"></textarea>
+    </div>
+    <div class="mb-3">
+        <label for="Calificacion" class="form-label">Calificación:</label>
+        <input type="number" class="form-control" id="Calificacion" name="Calificacion" required min="0" max="5">
+    </div>
+    <button type="submit" class="btn btn-primary">Calificar</button>
+</form>
 
         <table class="table table-sm mt-4">
             <thead>
