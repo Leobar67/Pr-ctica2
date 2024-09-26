@@ -13,12 +13,12 @@ con = mysql.connector.connect(
 
 app = Flask(__name__)
 
-@app.route("/exp")
+@app.route("/")
 def index():
     return render_template("app.html")
 
 # Ruta para mostrar la vista de experiencia
-@app.route("/")
+@app.route("/exp")
 def experiencia():
     return render_template("0experiencia.html")
 
