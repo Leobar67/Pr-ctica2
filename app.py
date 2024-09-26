@@ -18,7 +18,7 @@ def index():
     return render_template("app.html")
 
 # Ruta para guardar la encuesta
-@app.route("/guardar_encuesta", methods=["GET"])
+@app.route("/guardar_encuesta", methods=["POST"])
 def guardar_encuesta():
     try:
         if not con.is_connected():
