@@ -41,60 +41,64 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 
-    <script>
-        window.addEventListener("load", function (event) {
-            // Función para buscar encuestas en la BD con FLASK y mostrarlas en el TBODY
-            function encuesta() {
-                $.get("/buscar_encuestas", function (respuesta) {
-                    $("#tbodyEncuesta").html("");
+<script>
+    window.addEventListener("load", function (event) {
 
-                    for (var x in respuesta) {
-                        var registro = respuesta[x];
-                        $("#tbodyEncuesta").append(`<tr>
-                            <td>${registro.Nombre_Apellido}</td>
-                            <td>${registro.Comentario}</td>
-                            <td>${registro.Calificacion}</td>
-                        </tr>`);
-                    }
-                });
-            }
+        // Función para buscar encuestas en la BD con FLASK y mostrarlas en el TBODY
+        function encuesta() {
+            $.get("/buscar_encuestas", function (respuesta) {
+                $("#tbodyEncuesta").html("");
 
+                for (var x in respuesta) {
+                    var registro = respuesta[x];
+                    $("#tbodyEncuesta").append(`<tr>
+                        <td>${registro.Nombre_Apellido}</td>
+                        <td>${registro.Comentario}</td>
+                        <td>${registro.Calificacion}</td>
+                    </tr>`);
+                }
+            });
+        }
+
+        encuesta();
+
+        Pusher.logToConsole = true;
+
+        var pusher = new Pusher("2df86616075904231311", {
+            cluster: "us2"
+        });
+
+        var channel = pusher.subscribe("registroencusta");
+
+        channel.bind("nuevoRegistroEncuesta", function (registro) {
             encuesta();
+        });
 
-            Pusher.logToConsole = true;
-            
-            var pusher = new Pusher("2df86616075904231311", {
-            cluster: "us2"  // Cambia esto si el clúster es diferente
-                   
-            });
+        // Enviar el formulario mediante AJAX
+        $("#encuestaForm").submit(function (event) {
+            event.preventDefault();  // Evita el envío tradicional del formulario
 
+            var formData = $(this).serialize();  // Serializa los datos del formulario
 
-            var channel = pusher.subscribe("registroencusta");
-
-            channel.bind("nuevoRegistroEncuesta", function (registro) {
-                encuesta();
-            });
-
-            $("#encuestaForm").validate({
-                messages: {
-                    Nombre_Apellido: {
-                        required: "Por favor, introduce tu nombre y apellido.",
-                        minlength: "Debes introducir al menos 10 caracteres.",
-                        maxlength: "No puedes exceder los 50 caracteres."
-                    },
-                    Comentario: {
-                        required: "Por favor, introduce un comentario.",
-                        minlength: "Debes introducir al menos 10 caracteres.",
-                        maxlength: "No puedes exceder los 50 caracteres."
-                    },
-                    Calificacion: {
-                        required: "Por favor, introduce una calificación.",
-                        min: "La calificación mínima es 0.",
-                        max: "La calificación máxima es 5."
+            $.ajax({
+                url: "/guardar_encuesta",  // URL de la API para guardar
+                method: "POST",            // Usa el método POST
+                data: formData,            // Envía los datos serializados
+                success: function (response) {
+                    if (response.success) {
+                        alert("Encuesta guardada exitosamente!");
+                        encuesta();  // Actualiza la tabla de encuestas
+                        $("#encuestaForm")[0].reset();  // Limpia el formulario
+                    } else {
+                        alert("Error al guardar la encuesta: " + response.message);
                     }
+                },
+                error: function (xhr, status, error) {
+                    alert("Ocurrió un error al intentar guardar la encuesta: " + error);
                 }
             });
         });
-    </script>
+    });
+</script>
 </body>
 </html>
