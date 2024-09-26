@@ -14,32 +14,32 @@ con = mysql.connector.connect(
 
 app = Flask(__name__)
 
-# Ruta para renderizar el HTML
 @app.route("/")
 def index():
     return render_template("app.html")
 
-# Ruta para guardar la encuesta usando POST
+# Ruta para guardar la encuesta
 @app.route("/guardar_encuesta", methods=["POST"])
 def guardar_encuesta():
     try:
+        # Verificar que la conexión esté activa
         if not con.is_connected():
             con.reconnect()
 
-        # Obtener los datos enviados desde el formulario
+        # Obtener los datos del formulario
         Nombre_Apellido = request.form["Nombre_Apellido"]
         Comentario = request.form["Comentario"]
         Calificacion = request.form["Calificacion"]
 
         cursor = con.cursor()
 
-        # Consulta SQL para insertar en la base de datos
+        # Inserción en la base de datos
         sql = "INSERT INTO tst0_experiencias (Nombre_Apellido, Comentario, Calificacion) VALUES (%s, %s, %s)"
         val = (Nombre_Apellido, Comentario, Calificacion)
         cursor.execute(sql, val)
         con.commit()
 
-        # Configuración de Pusher para enviar actualizaciones en tiempo real
+        # Disparar el evento con Pusher para actualizar en tiempo real
         pusher_client = pusher.Pusher(
             app_id="1714541",
             key="2df86616075904231311",
@@ -54,11 +54,12 @@ def guardar_encuesta():
             "Calificacion": Calificacion
         })
 
-        return jsonify({"success": True, "message": "Encuesta guardada correctamente"})
-    
+        # Devolver una respuesta JSON de éxito
+        return jsonify({"success": True, "message": "Encuesta guardada exitosamente!"})
+
     except mysql.connector.Error as err:
         print(f"Error al guardar la encuesta: {err}")
-        return jsonify({"success": False, "message": f"Error al guardar la encuesta: {err}"})
+        return jsonify({"success": False, "message": f"Error al guardar la encuesta: {err}"}), 500
 
 # Ruta para buscar encuestas en la base de datos
 @app.route("/buscar_encuestas")
