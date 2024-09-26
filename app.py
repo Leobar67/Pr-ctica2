@@ -22,19 +22,25 @@ def index():
 def guardar_encuesta():
     print(request.form)
     try:
+        # Revisa si la conexión sigue activa
         if not con.is_connected():
             con.reconnect()
-        
+
         Nombre_Apellido = request.form["Nombre_Apellido"]
         Comentario = request.form["Comentario"]
         Calificacion = request.form["Calificacion"]
 
         cursor = con.cursor()
+
+        # Imprime la consulta SQL para verificar que esté construida correctamente
         sql = "INSERT INTO tst0_experiencias (Nombre_Apellido, Comentario, Calificacion) VALUES (%s, %s, %s)"
         val = (Nombre_Apellido, Comentario, Calificacion)
+        print(f"Consulta SQL: {sql} con valores {val}")
+
         cursor.execute(sql, val)
-        
         con.commit()
+
+        print(f"Inserción exitosa para {Nombre_Apellido}")
 
         pusher_client = pusher.Pusher(
             app_id="1714541",
@@ -50,7 +56,13 @@ def guardar_encuesta():
             "Calificacion": Calificacion
         })
 
-        return f"Encuesta guardada: {nombre_apellido} - Calificación: {calificacion}"
+        return f"Encuesta guardada: {Nombre_Apellido} - Calificación: {Calificacion}"
+    
+    except mysql.connector.Error as err:
+        # Imprime el error SQL específico
+        print(f"Error al guardar la encuesta: {err}")
+        return f"Error al guardar la encuesta: {err}", 500
+
     
     except mysql.connector.Error as err:
         print(f"Error: {err}")
