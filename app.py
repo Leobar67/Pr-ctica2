@@ -18,38 +18,43 @@ def index():
     return render_template("app.html")
 
 # Ruta para guardar la encuesta
-@app.route("/guardar_encuesta", methods=["GET"])
+@app.route("/guardar_encuesta", methods=["POST"])
 def guardar_encuesta():
-    if not con.is_connected():
-        con.reconnect()
+    try:
+        if not con.is_connected():
+            con.reconnect()
+        
+        nombre_apellido = request.form["Nombre_Apellido"]
+        comentario = request.form["Comentario"]
+        calificacion = request.form["Calificacion"]
+
+        cursor = con.cursor()
+        sql = "INSERT INTO tst0_experiencias (Nombre_Apellido, Comentario, Calificacion) VALUES (%s, %s, %s)"
+        val = (nombre_apellido, comentario, calificacion)
+        cursor.execute(sql, val)
+        
+        con.commit()
+
+        pusher_client = pusher.Pusher(
+            app_id="1714541",
+            key="2df86616075904231311",
+            secret="2f91d936fd43d8e85a1a",
+            cluster="us2",
+            ssl=True
+        )
+
+        pusher_client.trigger("registroencusta", "nuevoRegistroEncuesta", {
+            "Nombre_Apellido": nombre_apellido,
+            "Comentario": comentario,
+            "Calificacion": calificacion
+        })
+
+        return f"Encuesta guardada: {nombre_apellido} - Calificación: {calificacion}"
     
-    nombre_apellido = request.form["Nombre_Apellido"]
-    comentario = request.form["Comentario"]
-    calificacion = request.form["Calificacion"]
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+        return f"Error al guardar la encuesta: {err}", 500
 
-    cursor = con.cursor()
-    sql = "INSERT INTO tst0_experiencias (Nombre_Apellido, Comentario, Calificacion) VALUES (%s, %s, %s)"
-    val = (nombre_apellido, comentario, calificacion)
-    cursor.execute(sql, val)
-    
-    con.commit()
-
-    pusher_client = pusher.Pusher(
-        app_id="1714541",
-        key="2df86616075904231311",
-        secret="2f91d936fd43d8e85a1a",
-        cluster="us2",
-        ssl=True
-    )
-
-    pusher_client.trigger("registroencusta", "nuevoRegistroEncuesta", {
-        "Nombre_Apellido": nombre_apellido,
-        "Comentario": comentario,
-        "Calificacion": calificacion
-    })
-
-    con.close()
-    return f"Encuesta guardada: {nombre_apellido} - Calificación: {calificacion}"
 
 # Ruta para buscar encuestas
 @app.route("/buscar_encuestas")
