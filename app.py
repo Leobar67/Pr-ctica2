@@ -24,13 +24,13 @@ def guardar_encuesta():
         if not con.is_connected():
             con.reconnect()
         
-        nombre_apellido = request.form["Nombre_Apellido"]
-        comentario = request.form["Comentario"]
-        calificacion = request.form["Calificacion"]
+        Nombre_Apellido = request.form["Nombre_Apellido"]
+        Comentario = request.form["Comentario"]
+        Calificacion = request.form["Calificacion"]
 
         cursor = con.cursor()
         sql = "INSERT INTO tst0_experiencias (Nombre_Apellido, Comentario, Calificacion) VALUES (%s, %s, %s)"
-        val = (nombre_apellido, comentario, calificacion)
+        val = (Nombre_Apellido, Comentario, Calificacion)
         cursor.execute(sql, val)
         
         con.commit()
@@ -44,9 +44,9 @@ def guardar_encuesta():
         )
 
         pusher_client.trigger("registroencusta", "nuevoRegistroEncuesta", {
-            "Nombre_Apellido": nombre_apellido,
-            "Comentario": comentario,
-            "Calificacion": calificacion
+            "Nombre_Apellido": Nombre_Apellido,
+            "Comentario": Comentario,
+            "Calificacion": Calificacion
         })
 
         return f"Encuesta guardada: {nombre_apellido} - Calificación: {calificacion}"
