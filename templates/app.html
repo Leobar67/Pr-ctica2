@@ -64,8 +64,10 @@
             Pusher.logToConsole = true;
             
             var pusher = new Pusher("2df86616075904231311", {
-                cluster: "us2"
+            cluster: "us2"  // Cambia esto si el clúster es diferente
+                   
             });
+
 
             var channel = pusher.subscribe("registroencusta");
 
