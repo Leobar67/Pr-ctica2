@@ -4,7 +4,7 @@ import mysql.connector
 
 con = mysql.connector.connect(
     host="185.232.14.52",
-    database="u760464709_tst_sep",
+    database="u760464709_tst_septst0_experiencias",
     user="u760464709_tst_sep_usr",
     password="dJ0CIAFF="
 )
