@@ -20,6 +20,7 @@ def index():
 # Ruta para guardar la encuesta
 @app.route("/guardar_encuesta", methods=["POST"])
 def guardar_encuesta():
+    print(request.form)
     try:
         if not con.is_connected():
             con.reconnect()
