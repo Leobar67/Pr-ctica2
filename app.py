@@ -18,7 +18,7 @@ def index():
     return render_template("app.html")
 
 # Ruta para guardar la encuesta
-@app.route("/guardar_encuesta", methods=["POST"])
+@app.route("/guardar_encuesta", methods=["GET"])
 def guardar_encuesta():
     print(request.form)
     try:
