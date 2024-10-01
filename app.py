@@ -55,7 +55,7 @@ def buscar():
 
     return registros
 
-@app.route("/experiencias/guardar", methods=["GET"])
+@app.route("/experiencias/guardar", methods=["POST"])
 def experienciasGuardar():
     args = request.args
     nombreapellido = request.args('Nombre_Apellido')
