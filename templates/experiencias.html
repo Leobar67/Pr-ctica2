@@ -132,5 +132,16 @@
             })
         })
     </script>    
+    <script>
+    window.addEventListener("load", function (event) {
+        $("#frmexperiencias").submit(function (event) {
+            event.preventDefault()
+
+            $.post("/registrar", $(this).serialize(), function (respuesta) {
+                console.log(respuesta)
+            })
+        })
+    })
+</script>
 </body>
 </html>
