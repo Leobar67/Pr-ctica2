@@ -117,7 +117,7 @@
     <script>
         window.addEventListener("load", function (event) {
             function buscar() {
-                $.get("/buscar", function (respuesta) {
+                $.get("/buscar", { timestamp: new Date().getTime() }, function (respuesta) {
 
                     $("#tbodyexperiencias").html("")
 
