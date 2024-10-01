@@ -1,5 +1,0 @@
-Flask
-Gunicorn
-pusher
-mysql-connector-python
-pytz
