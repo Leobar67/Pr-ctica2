@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
+
+    <title>Alumnos</title>
+</head>
+<body>
+    <!-- Nombre de la etiqueta Ejemplo: INPUT -->
+    <!-- # para ID -->
+    <!-- . para CLASS -->
+
+    <!-- form index 0 -->
+    <!-- #frmAlumnos -->
+    <!-- .formulario index 0 -->
+    <div class="container">
+        <form method="post" id="frmexperiencias" class="formulario">
+            <div class="mb-1">
+                <label id="lblNombreApellido" for="txtNombreApellido">Matrícula:</label>
+                <input type="number" name="txtNombreApellido" id="txtNombreApellido" class="form-control" required="true" minlength="8" data-rule-digits="true">
+            </div>
+            <div class="mb-1">
+                <label id="lblComentario" for="txtComentario">Nombre y Apellido:</label>
+                <input type="text" name="txtComentario" id="txtComentario" class="form-control" required="true" minlength="6" maxlength="25">
+            </div>
+            <div class="mb-1">
+                <label id="lblCalificacion" for="txtCalificacion">Calificacion:</label>
+                <input type="int" name="txtCalificacion" id="txtCalificacion" class="form-control" required="true" data-rule-digits="true">
+            </div>
+            <div class="text-end">
+                <button id="btnGuardarFA" name="btnGuardarFA" class="btn btn-dark">Guardar</button>
+            </div>
+        </form>
+        <div id="divexperiencias"></div>
+    
+        <!-- table index 0 -->
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Nombre y Apellido</th>
+                    <th>Comentario</th>
+                    <th>Calificacion</th>
+                </tr>
+            </thead>
+            <tbody id="tbodyexperiencias"></tbody>
+        </table>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+    <script>
+        window.addEventListener("load", function (event) {
+            $("#frmexperiencias").validate({
+                messages: {
+                    txtNombreApellido: {
+                        required: "Ingresa tu Nombre y Apellido",
+                        minlength: "Ingresa al menos 8 letras",
+                        digits: "Tu nombre no debe de llevar números"
+                    },
+                    txtComentario: {
+                        required: "Ingresa una reseña positiva",
+                        minlength: "Ingresa más o 6 caracteres",
+                        maxlength: "Ingresa menos o 25 caracteres"
+                    },
+                    txtCalificacion: {
+                        required: "Ingresa una calificacion",
+                        digits: "La calificacion es de solo números"
+                    }
+                },
+                rules: {
+                    txtNombreApellido: {
+                        required: true,
+                        minlength: 8,
+                        digits: true
+                    },
+                    txtComentario: {
+                        required: true,
+                        minlength: 6,
+                        maxlength: 25
+                    },                   
+                    txtCalificacion: {
+                        required: true,
+                        digits: true
+                    }
+                }
+            })
+
+            $("#frmexperiencias").submit(function (event) {
+                event.preventDefault()
+
+                $.post("/experiencias/guardar", $(this).serialize(), function (respuesta) {
+                    console.log(respuesta)
+                })
+            })
+        })
+    </script>
+    <script>
+        window.addEventListener("load", function (event) {
+            function buscar() {
+                $.get("/buscar", function (respuesta) {
+
+                    $("#tbodyexperiencias").html("")
+
+                    for (var x in respuesta) {
+                        var experiencias = respuesta[x]
+                        $("#tbodyexperiencias").append(`<tr>
+                            <td>${Nombre_Apellido[1]}</td>
+                            <td>${Comentario[2]}</td>
+                            <td>${Calificacion[3]}</td>
+                        </tr>`)
+                    }
+                })
+            }
+
+            buscar()
+            Pusher.logToConsole = true
+            var pusher = new Pusher("2df86616075904231311", {
+                cluster: "us2"
+            })
+
+            var channel = pusher.subscribe("canalRegistrosexperiencias");
+            channel.bind("registroexperiencias", function (experiencias) {
+                buscar()
+            })
+        })
+    </script>    
+</body>
+</html>
