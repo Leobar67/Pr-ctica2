@@ -23,16 +23,16 @@
     <div class="container">
         <form method="post" id="frmexperiencias" class="formulario">
             <div class="mb-1">
-                <label id="lblNombreApellido" for="txtNombreApellido">Matrícula:</label>
-                <input type="number" name="txtNombreApellido" id="txtNombreApellido" class="form-control" required="true" minlength="8" data-rule-digits="true">
+                <label id="lblNombreApellido" for="txtNombreApellido">Nombre y Apellido:</label>
+                <input type="text" name="txtNombreApellido" id="txtNombreApellido" class="form-control" required="true" minlength="8" data-rule-digits="true">
             </div>
             <div class="mb-1">
-                <label id="lblComentario" for="txtComentario">Nombre y Apellido:</label>
+                <label id="lblComentario" for="txtComentario">Comentario:</label>
                 <input type="text" name="txtComentario" id="txtComentario" class="form-control" required="true" minlength="6" maxlength="25">
             </div>
             <div class="mb-1">
                 <label id="lblCalificacion" for="txtCalificacion">Calificacion:</label>
-                <input type="int" name="txtCalificacion" id="txtCalificacion" class="form-control" required="true" data-rule-digits="true">
+                <input type="number" name="txtCalificacion" id="txtCalificacion" class="form-control" required="true" data-rule-digits="true">
             </div>
             <div class="text-end">
                 <button id="btnGuardarFA" name="btnGuardarFA" class="btn btn-dark">Guardar</button>
