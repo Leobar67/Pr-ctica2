@@ -22,7 +22,7 @@ app = Flask(__name__)
 def index():
     con.close()
 
-    return render_template("app.html")
+    return render_template("experiencias.html")
 
 # Ejemplo de ruta GET usando templates para mostrar una vista
 @app.route("/experiencias")
@@ -55,7 +55,7 @@ def buscar():
 
     return registros
 
-@app.route("/registrar", methods=["GET"])
+@app.route("/experiencias/guardar", methods=["GET"])
 def registrar():
     args = request.args
 
