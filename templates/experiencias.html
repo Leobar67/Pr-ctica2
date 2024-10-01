@@ -24,7 +24,7 @@
         <form method="post" id="frmexperiencias" class="formulario">
             <div class="mb-1">
                 <label id="lblNombreApellido" for="txtNombreApellido">Nombre y Apellido:</label>
-                <input type="text" name="txtNombreApellido" id="txtNombreApellido" class="form-control" required="true" minlength="8" data-rule-digits="true">
+                <input type="text" name="txtNombreApellido" id="txtNombreApellido" class="form-control" required="true" minlength="8" maxlength="12" data-rule-digits="true">
             </div>
             <div class="mb-1">
                 <label id="lblComentario" for="txtComentario">Comentario:</label>
@@ -78,6 +78,7 @@
                     txtNombreApellido: {
                         required: true,
                         minlength: 8,
+                        maxlength: 12,
                         digits: true
                     },
                     txtComentario: {
