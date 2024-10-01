@@ -57,7 +57,9 @@ def buscar():
 
 @app.route("/registrar", methods=["POST"])
 def registrar():
-    args = request.args
+    nombre_apellido = request.form.get('txtNombreApellido')
+    comentario = request.form.get('txtComentario')
+    calificacion = request.form.get('txtCalificacion')
 
     if not con.is_connected():
         con.reconnect()
@@ -65,9 +67,10 @@ def registrar():
     cursor = con.cursor()
 
     sql = "INSERT INTO tst0_experiencias (Nombre_Apellido, Comentario, Calificacion) VALUES (%s, %s, %s)"
-    cursor.execute(sql)
-    
+    cursor.execute(sql, (nombre_apellido, comentario, calificacion))
+
     con.commit()
+    cursor.close()
     con.close()
 
     pusher_client = pusher.Pusher(
@@ -78,6 +81,10 @@ def registrar():
         ssl=True
     )
 
-    pusher_client.trigger("canalRegistrosexperiencias", "registroexperiencias",args)
+    pusher_client.trigger("canalRegistrosexperiencias", "registroexperiencias", {
+        'Nombre_Apellido': nombre_apellido,
+        'Comentario': comentario,
+        'Calificacion': calificacion
+    })
 
-    return args
+    return {"status": "success", "message": "Datos guardados correctamente"}
