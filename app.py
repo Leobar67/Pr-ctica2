@@ -22,15 +22,8 @@ pusher_client = pusher.Pusher(
 
 @app.route("/")
 def index():
-    con.close()
     return render_template("experiencias.html")
 
-@app.route("/experiencias")
-def experiencias():
-    con.close()
-    return render_template("experiencias.html")
-
-# Ruta para buscar y devolver las experiencias
 @app.route("/buscar")
 def buscar():
     if not con.is_connected():
@@ -43,7 +36,6 @@ def buscar():
     con.close()
     return jsonify(registros)
 
-# Ruta para registrar una nueva experiencia
 @app.route("/registrar", methods=["POST"])
 def registrar():
     nombre_apellido = request.form.get('txtNombreApellido')
@@ -68,7 +60,6 @@ def registrar():
 
     return {"status": "success", "message": "Datos guardados correctamente"}
 
-# Ruta para obtener una experiencia por ID
 @app.route("/experiencia/<int:id>")
 def obtener_experiencia(id):
     if not con.is_connected():
@@ -81,7 +72,6 @@ def obtener_experiencia(id):
     con.close()
     return jsonify(experiencia)
 
-# Ruta para actualizar una experiencia existente
 @app.route("/actualizar", methods=["POST"])
 def actualizar_experiencia():
     id_experiencia = request.form.get('id_experiencia')
@@ -100,19 +90,18 @@ def actualizar_experiencia():
     """
     cursor.execute(sql, (nombre_apellido, comentario, calificacion, id_experiencia))
     con.commit()
-
     cursor.close()
     con.close()
 
     pusher_client.trigger("canalRegistrosexperiencias", "registroexperiencias", {
         'Nombre_Apellido': nombre_apellido,
         'Comentario': comentario,
-        'Calificacion': calificacion
+        'Calificacion': calificacion,
+        'Id_Experiencia': id_experiencia
     })
 
     return {"status": "success", "message": "Experiencia actualizada correctamente"}
 
-# Ruta para eliminar una experiencia por ID
 @app.route("/eliminar/<int:id>", methods=["POST"])
 def eliminar_experiencia(id):
     if not con.is_connected():
@@ -122,9 +111,12 @@ def eliminar_experiencia(id):
     sql = "DELETE FROM tst0_experiencias WHERE Id_Experiencia = %s"
     cursor.execute(sql, (id,))
     con.commit()
-
     cursor.close()
     con.close()
+
+    pusher_client.trigger("canalRegistrosexperiencias", "eliminarexperiencia", {
+        'Id_Experiencia': id
+    })
 
     return {"status": "success", "message": "Experiencia eliminada correctamente"}
 
