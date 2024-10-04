@@ -1,18 +1,16 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
-
     <title>Experiencias</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
     <div class="container">
+        <h1>Experiencias</h1>
         <form method="post" id="frmexperiencias" class="formulario">
             <div class="mb-1">
                 <label for="txtNombreApellido">Nombre y Apellido:</label>
@@ -26,13 +24,12 @@
                 <label for="txtCalificacion">Calificación:</label>
                 <input type="number" name="txtCalificacion" id="txtCalificacion" class="form-control" required>
             </div>
+            <input type="hidden" name="id_experiencia" id="id_experiencia">
             <div class="text-end">
                 <button id="btnGuardarFA" name="btnGuardarFA" class="btn btn-dark">Guardar</button>
             </div>
         </form>
 
-        <div id="divexperiencias"></div>
-    
         <table class="table table-sm">
             <thead>
                 <tr>
@@ -48,85 +45,51 @@
 
     <script>
         window.addEventListener("load", function (event) {
-            // Formulario de validación
-            $("#frmexperiencias").validate();
-
-            // Subida de la experiencia
-            $("#frmexperiencias").submit(function (event) {
-                event.preventDefault();
-
-                $.post("/registrar", $(this).serialize(), function (respuesta) {
-                    console.log(respuesta);
-                });
-            });
-
-            // Buscar y mostrar las experiencias
             function buscar() {
-                $.get("/buscar", { timestamp: new Date().getTime() }, function (respuesta) {
-                    $("#tbodyexperiencias").html("");
+                $.get("/buscar", function (respuesta) {
+                    $("#tbodyexperiencias").html("")
                     for (var x in respuesta) {
-                        var experiencia = respuesta[x];
+                        var experiencia = respuesta[x]
                         $("#tbodyexperiencias").append(`<tr>
                             <td>${experiencia[1]}</td>
                             <td>${experiencia[2]}</td>
                             <td>${experiencia[3]}</td>
                             <td>
-                                <button class="btn btn-primary btn-sm" onclick="editarExperiencia(${experiencia[0]})">Editar</button>
-                                <button class="btn btn-danger btn-sm" onclick="eliminarExperiencia(${experiencia[0]})">Eliminar</button>
+                                <button onclick="editarExperiencia(${experiencia[0]})" class="btn btn-warning btn-sm">Editar</button>
+                                <button onclick="eliminarExperiencia(${experiencia[0]})" class="btn btn-danger btn-sm">Eliminar</button>
                             </td>
-                        </tr>`);
+                        </tr>`)
                     }
-                });
+                })
             }
 
-            buscar();
-
-            // Pusher para actualizaciones en tiempo real
-            Pusher.logToConsole = true;
-            var pusher = new Pusher("2df86616075904231311", {
-                cluster: "us2"
-            });
-
-            var channel = pusher.subscribe("canalRegistrosexperiencias");
-            channel.bind("registroexperiencias", function (experiencias) {
-                buscar();
-            });
-        });
-
-        // Función para eliminar experiencia
-        function eliminarExperiencia(id) {
-            if (confirm("¿Estás seguro de que deseas eliminar esta experiencia?")) {
-                $.ajax({
-                    url: `/experiencia/eliminar/${id}`,
-                    method: "DELETE",
-                    success: function (respuesta) {
-                        alert("Experiencia eliminada");
-                        buscar();
-                    }
-                });
+            function editarExperiencia(id) {
+                $.get(`/experiencia/${id}`, function (experiencia) {
+                    $("#txtNombreApellido").val(experiencia.Nombre_Apellido)
+                    $("#txtComentario").val(experiencia.Comentario)
+                    $("#txtCalificacion").val(experiencia.Calificacion)
+                    $("#id_experiencia").val(experiencia.Id_Experiencia)
+                })
             }
-        }
 
-        // Función para editar experiencia
-        function editarExperiencia(id) {
-            let nuevoComentario = prompt("Ingresa el nuevo comentario:");
-            let nuevaCalificacion = prompt("Ingresa la nueva calificación:");
-
-            if (nuevoComentario && nuevaCalificacion) {
-                $.ajax({
-                    url: `/experiencia/actualizar/${id}`,
-                    method: "PUT",
-                    data: {
-                        comentario: nuevoComentario,
-                        calificacion: nuevaCalificacion
-                    },
-                    success: function (respuesta) {
-                        alert("Experiencia actualizada");
-                        buscar();
-                    }
-                });
+            function eliminarExperiencia(id) {
+                $.post(`/eliminar/${id}`, function (respuesta) {
+                    alert(respuesta.message)
+                    buscar()
+                })
             }
-        }
+
+            buscar()
+
+            // Enviar formulario para actualizar o agregar experiencia
+            $("#frmexperiencias").submit(function (event) {
+                event.preventDefault()
+                $.post("/registrar", $(this).serialize(), function (respuesta) {
+                    alert(respuesta.message)
+                    buscar()
+                })
+            })
+        })
     </script>
 </body>
 </html>
