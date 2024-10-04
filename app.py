@@ -2,6 +2,9 @@ from flask import Flask, render_template, request, jsonify
 import pusher
 import mysql.connector
 
+app = Flask(__name__)
+
+# Conexión a la base de datos
 con = mysql.connector.connect(
     host="185.232.14.52",
     database="u760464709_tst_sep",
@@ -9,33 +12,12 @@ con = mysql.connector.connect(
     password="dJ0CIAFF="
 )
 
-app = Flask(__name__)
-
-# Configuración de Pusher
-pusher_client = pusher.Pusher(
-    app_id="1714541",
-    key="2df86616075904231311",
-    secret="2f91d936fd43d8e85a1a",
-    cluster="us2",
-    ssl=True
-)
-
+# Ruta principal
 @app.route("/")
 def index():
     return render_template("experiencias.html")
 
-@app.route("/buscar")
-def buscar():
-    if not con.is_connected():
-        con.reconnect()
-
-    cursor = con.cursor()
-    cursor.execute("SELECT * FROM tst0_experiencias ORDER BY Id_Experiencia DESC")
-    registros = cursor.fetchall()
-
-    con.close()
-    return jsonify(registros)
-
+# Ruta para registrar una experiencia
 @app.route("/registrar", methods=["POST"])
 def registrar():
     nombre_apellido = request.form.get('txtNombreApellido')
@@ -50,75 +32,93 @@ def registrar():
     cursor.execute(sql, (nombre_apellido, comentario, calificacion))
     con.commit()
     cursor.close()
-    con.close()
 
+    # Notificar a Pusher sobre la nueva experiencia
+    pusher_client = pusher.Pusher(
+        app_id="1714541",
+        key="2df86616075904231311",
+        secret="2f91d936fd43d8e85a1a",
+        cluster="us2",
+        ssl=True
+    )
     pusher_client.trigger("canalRegistrosexperiencias", "registroexperiencias", {
         'Nombre_Apellido': nombre_apellido,
         'Comentario': comentario,
         'Calificacion': calificacion
     })
 
-    return {"status": "success", "message": "Datos guardados correctamente"}
+    return jsonify({"status": "success", "message": "Experiencia registrada correctamente"})
 
-@app.route("/experiencia/<int:id>")
-def obtener_experiencia(id):
-    if not con.is_connected():
-        con.reconnect()
-
-    cursor = con.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM tst0_experiencias WHERE Id_Experiencia = %s", (id,))
-    experiencia = cursor.fetchone()
-
-    con.close()
-    return jsonify(experiencia)
-
-@app.route("/actualizar", methods=["POST"])
-def actualizar_experiencia():
-    id_experiencia = request.form.get('id_experiencia')
-    nombre_apellido = request.form.get('txtNombreApellido')
-    comentario = request.form.get('txtComentario')
-    calificacion = request.form.get('txtCalificacion')
-
+# Ruta para buscar experiencias
+@app.route("/buscar")
+def buscar():
     if not con.is_connected():
         con.reconnect()
 
     cursor = con.cursor()
-    sql = """
-        UPDATE tst0_experiencias 
-        SET Nombre_Apellido = %s, Comentario = %s, Calificacion = %s 
-        WHERE Id_Experiencia = %s
-    """
-    cursor.execute(sql, (nombre_apellido, comentario, calificacion, id_experiencia))
-    con.commit()
+    cursor.execute("SELECT * FROM tst0_experiencias ORDER BY Id_Experiencia DESC")
+    registros = cursor.fetchall()
     cursor.close()
-    con.close()
 
-    pusher_client.trigger("canalRegistrosexperiencias", "registroexperiencias", {
-        'Nombre_Apellido': nombre_apellido,
-        'Comentario': comentario,
-        'Calificacion': calificacion,
-        'Id_Experiencia': id_experiencia
-    })
+    return jsonify(registros)
 
-    return {"status": "success", "message": "Experiencia actualizada correctamente"}
-
-@app.route("/eliminar/<int:id>", methods=["POST"])
+# Ruta para eliminar una experiencia
+@app.route("/experiencia/eliminar/<int:id>", methods=["DELETE"])
 def eliminar_experiencia(id):
     if not con.is_connected():
         con.reconnect()
 
     cursor = con.cursor()
-    sql = "DELETE FROM tst0_experiencias WHERE Id_Experiencia = %s"
-    cursor.execute(sql, (id,))
+    cursor.execute("DELETE FROM tst0_experiencias WHERE Id_Experiencia = %s", (id,))
     con.commit()
     cursor.close()
-    con.close()
 
-    pusher_client.trigger("canalRegistrosexperiencias", "eliminarexperiencia", {
-        'Id_Experiencia': id
+    # Notificar a Pusher sobre la eliminación
+    pusher_client = pusher.Pusher(
+        app_id="1714541",
+        key="2df86616075904231311",
+        secret="2f91d936fd43d8e85a1a",
+        cluster="us2",
+        ssl=True
+    )
+    pusher_client.trigger("canalRegistrosexperiencias", "registroexperiencias", {
+        'message': 'Experiencia eliminada'
     })
 
-    return {"status": "success", "message": "Experiencia eliminada correctamente"}
+    return jsonify({"status": "success", "message": "Experiencia eliminada correctamente"})
+
+# Ruta para actualizar una experiencia
+@app.route("/experiencia/actualizar/<int:id>", methods=["PUT"])
+def actualizar_experiencia(id):
+    nombre_apellido = request.form.get("nombre_apellido")
+    comentario = request.form.get("comentario")
+    calificacion = request.form.get("calificacion")
+
+    if not con.is_connected():
+        con.reconnect()
+
+    cursor = con.cursor()
+    cursor.execute("""
+        UPDATE tst0_experiencias 
+        SET Nombre_Apellido = %s, Comentario = %s, Calificacion = %s 
+        WHERE Id_Experiencia = %s
+    """, (nombre_apellido, comentario, calificacion, id))
+    con.commit()
+    cursor.close()
+
+    # Notificar a Pusher sobre la actualización
+    pusher_client = pusher.Pusher(
+        app_id="1714541",
+        key="2df86616075904231311",
+        secret="2f91d936fd43d8e85a1a",
+        cluster="us2",
+        ssl=True
+    )
+    pusher_client.trigger("canalRegistrosexperiencias", "registroexperiencias", {
+        'message': 'Experiencia actualizada'
+    })
+
+    return jsonify({"status": "success", "message": "Experiencia actualizada correctamente"})
 
 if __name__ == "__main__":
     app.run(debug=True)
