@@ -47,16 +47,53 @@
         </table>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
     <script>
         window.addEventListener("load", function (event) {
-            // Formulario de validación
-            $("#frmexperiencias").validate();
+            // Validación del formulario
+            $("#frmexperiencias").validate({
+                messages: {
+                    txtNombreApellido: {
+                        required: "Ingresa tu Nombre y Apellido",
+                        minlength: "Ingresa al menos 8 letras",
+                        maxlength: "Ingresa menos de 25 letras",
+                        digits: "Tu nombre no debe llevar números"
+                    },
+                    txtComentario: {
+                        required: "Ingresa una reseña positiva",
+                        minlength: "Ingresa al menos 6 caracteres",
+                        maxlength: "Ingresa menos de 25 caracteres"
+                    },
+                    txtCalificacion: {
+                        required: "Ingresa una calificación",
+                        digits: "La calificación debe ser un número"
+                    }
+                },
+                rules: {
+                    txtNombreApellido: {
+                        required: true,
+                        minlength: 8,
+                        maxlength: 25,
+                        digits: false
+                    },
+                    txtComentario: {
+                        required: true,
+                        minlength: 6,
+                        maxlength: 25
+                    },
+                    txtCalificacion: {
+                        required: true,
+                        digits: true
+                    }
+                }
+            });
 
             // Subida de la experiencia
             $("#frmexperiencias").submit(function (event) {
                 event.preventDefault();
 
-                $.post("/registrar", $(this).serialize(), function (respuesta) {
+                $.post("/experiencias/guardar", $(this).serialize(), function (respuesta) {
                     console.log(respuesta);
                     buscar();  // Actualiza la lista después de registrar
                 });
@@ -121,5 +158,5 @@
                     method: "PUT",
                     data: { nombre_apellido: nuevoNombreApellido, comentario: nuevoComentario, calificacion: nuevaCalificacion }, success: function (respuesta) { alert("Experiencia actualizada"); buscar(); } }); } } 
     </script>
-  </body> 
+</body>
 </html>
