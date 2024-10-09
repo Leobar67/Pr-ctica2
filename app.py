@@ -1,150 +1,63 @@
-from flask import Flask, render_template, request, jsonify
-import pusher
+from flask import Flask, request, jsonify
 import mysql.connector
 
 app = Flask(__name__)
 
-# Conexión a la base de datos
-con = mysql.connector.connect(
+# Conexión a la base de datos (ajusta los parámetros según sea necesario)
+db = mysql.connector.connect(
     host="185.232.14.52",
-    database="u760464709_tst_sep",
-    user="u760464709_tst_sep_usr",
-    password="dJ0CIAFF="
+    user="tu_usuario",
+    password="tu_contraseña",
+    database="tu_base_de_datos"
 )
 
-# Inicializar el cliente de Pusher
-pusher_client = pusher.Pusher(
-    app_id="1714541",
-    key="2df86616075904231311",
-    secret="2f91d936fd43d8e85a1a",
-    cluster="us2",
-    ssl=True
-)
-
-# Ruta principal
-@app.route("/")
-def index():
-    return render_template("experiencias.html")
-
-# Ruta para registrar una experiencia
-@app.route("/registrar", methods=["POST"])
+@app.route('/registrar', methods=['POST'])
 def registrar():
-    nombre_apellido = request.form.get('txtNombreApellido')
-    comentario = request.form.get('txtComentario')
-    calificacion = request.form.get('txtCalificacion')
+    nombre_apellido = request.form['txtNombreApellido']
+    comentario = request.form['txtComentario']
+    calificacion = request.form['txtCalificacion']
 
-    if not nombre_apellido or not comentario or not calificacion:
-        return jsonify({"status": "error", "message": "Faltan datos"})
+    cursor = db.cursor()
+    cursor.execute("INSERT INTO experiencias (Nombre_Apellido, Comentario, Calificacion) VALUES (%s, %s, %s)",
+                   (nombre_apellido, comentario, calificacion))
+    db.commit()
+    cursor.close()
 
-    try:
-        if not con.is_connected():
-            con.reconnect()
+    return jsonify({"message": "Experiencia registrada exitosamente."})
 
-        cursor = con.cursor()
-        sql = "INSERT INTO tst0_experiencias (Nombre_Apellido, Comentario, Calificacion) VALUES (%s, %s, %s)"
-        cursor.execute(sql, (nombre_apellido, comentario, calificacion))
-        con.commit()
-        cursor.close()
-
-        # Notificar a Pusher
-        pusher_client.trigger("canalRegistrosexperiencias", "registroexperiencias", {
-            'Nombre_Apellido': nombre_apellido,
-            'Comentario': comentario,
-            'Calificacion': calificacion
-        })
-
-        return jsonify({"status": "success", "message": "Experiencia registrada correctamente"})
-
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)})
-
-# Ruta para buscar experiencias
-@app.route("/buscar")
+@app.route('/buscar', methods=['GET'])
 def buscar():
-    if not con.is_connected():
-        con.reconnect()
+    cursor = db.cursor()
+    cursor.execute("SELECT * FROM experiencias")
+    resultados = cursor.fetchall()
+    cursor.close()
+    return jsonify(resultados)
 
-    cursor = con.cursor()
-    cursor.execute("SELECT * FROM tst0_experiencias ORDER BY Id_Experiencia DESC")
-    registros = cursor.fetchall()
+@app.route('/experiencia/eliminar/<int:id>', methods=['DELETE'])
+def eliminar(id):
+    cursor = db.cursor()
+    cursor.execute("DELETE FROM experiencias WHERE id = %s", (id,))
+    db.commit()
+    cursor.close()
+    return jsonify({"message": "Experiencia eliminada exitosamente."})
+
+@app.route('/experiencia/actualizar/<int:id>', methods=['PUT'])
+def actualizar(id):
+    data = request.get_json()
+    nuevo_nombre_apellido = data['nombre_apellido']
+    nuevo_comentario = data['comentario']
+    nueva_calificacion = data['calificacion']
+
+    cursor = db.cursor()
+    cursor.execute("""
+        UPDATE experiencias
+        SET Nombre_Apellido = %s, Comentario = %s, Calificacion = %s
+        WHERE id = %s
+    """, (nuevo_nombre_apellido, nuevo_comentario, nueva_calificacion, id))
+    db.commit()
     cursor.close()
 
-    # Convertir los registros en una lista de diccionarios
-    experiencias = [
-        {
-            "Id_Experiencia": registro[0],
-            "Nombre_Apellido": registro[1],
-            "Comentario": registro[2],
-            "Calificacion": registro[3]
-        }
-        for registro in registros
-    ]
-    return jsonify(experiencias)
+    return jsonify({"message": "Experiencia actualizada exitosamente."})
 
-# Ruta para eliminar una experiencia
-@app.route("/experiencia/eliminar/<int:id>", methods=["DELETE"])
-def eliminar_experiencia(id):
-    if not con.is_connected():
-        con.reconnect()
-
-    cursor = con.cursor()
-    cursor.execute("DELETE FROM tst0_experiencias WHERE Id_Experiencia = %s", (id,))
-    con.commit()
-    cursor.close()
-
-    # Notificar a Pusher
-    pusher_client.trigger("canalRegistrosexperiencias", "registroexperiencias", {
-        'message': 'Experiencia eliminada'
-    })
-
-    return jsonify({"status": "success", "message": "Experiencia eliminada correctamente"})
-
-# Ruta para actualizar una experiencia
-@app.route("/experiencia/actualizar/<int:id>", methods=["PUT"])
-def actualizar_experiencia(id):
-    nombre_apellido = request.form.get('txtNombreApellido')
-    comentario = request.form.get('txtComentario')
-    calificacion = request.form.get('txtCalificacion')
-
-    if not con.is_connected():
-        con.reconnect()
-
-    cursor = con.cursor()
-    cursor.execute(""" 
-        UPDATE tst0_experiencias 
-        SET Nombre_Apellido = %s, Comentario = %s, Calificacion = %s 
-        WHERE Id_Experiencia = %s 
-    """, (nombre_apellido, comentario, calificacion, id))
-    con.commit()
-    cursor.close()
-
-    # Notificar a Pusher sobre la actualización
-    pusher_client.trigger("canalRegistrosexperiencias", "registroexperiencias", {
-        'message': 'Experiencia actualizada'
-    })
-
-    return jsonify({"status": "success", "message": "Experiencia actualizada correctamente"})
-
-# Ruta para obtener una experiencia específica por ID
-@app.route("/experiencia/<int:id>")
-def obtener_experiencia(id):
-    if not con.is_connected():
-        con.reconnect()
-
-    cursor = con.cursor()
-    cursor.execute("SELECT * FROM tst0_experiencias WHERE Id_Experiencia = %s", (id,))
-    experiencia = cursor.fetchone()
-    cursor.close()
-
-    if experiencia:
-        return jsonify({
-            "Id_Experiencia": experiencia[0],
-            "Nombre_Apellido": experiencia[1],
-            "Comentario": experiencia[2],
-            "Calificacion": experiencia[3]
-        })
-    else:
-        return jsonify({"status": "error", "message": "Experiencia no encontrada"}), 404
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)
