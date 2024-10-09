@@ -102,10 +102,9 @@ def eliminar_experiencia(id):
 # Ruta para actualizar una experiencia
 @app.route("/experiencia/actualizar/<int:id>", methods=["PUT"])
 def actualizar_experiencia(id):
-    data = request.get_json()  # Cambiado para recibir JSON
-    nombre_apellido = data.get("nombre_apellido")
-    comentario = data.get("comentario")
-    calificacion = data.get("calificacion")
+    nombre_apellido = request.form.get('txtNombreApellido')
+    comentario = request.form.get('txtComentario')
+    calificacion = request.form.get('txtCalificacion')
 
     if not con.is_connected():
         con.reconnect()
