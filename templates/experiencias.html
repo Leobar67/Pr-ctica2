@@ -6,6 +6,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://js.pusher.com/7.0/pusher.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -43,6 +44,17 @@
     </div>
 
     <script>
+        // Pusher para actualizaciones en tiempo real
+        Pusher.logToConsole = true;
+        var pusher = new Pusher("2df86616075904231311", {
+            cluster: "us2" // Asegúrate de que este sea el clúster correcto
+        });
+        var channel = pusher.subscribe('canalRegistrosexperiencias');
+        channel.bind('registroexperiencias', function(data) {
+            cargarExperiencias();  // Recargar experiencias al recibir un evento de Pusher
+            alert(data.message);   // Mostrar el mensaje recibido
+        });
+
         // Validación del formulario
         $("#frmexperiencias").validate({
             messages: {
@@ -103,7 +115,7 @@
                             <td>${exp[3]}</td>
                             <td>
                                 <button class="btn btn-warning" onclick="editarExperiencia(${exp[0]})">Editar</button>
-                                <button class="btn btn-danger" onclick="eliminarExperiencia(${exp[0]})">Eliminar</button>
+                                <button class="btn btn-danger" onclick="confirmarEliminar(${exp[0]})">Eliminar</button>
                             </td>
                         </tr>
                     `);
@@ -111,7 +123,14 @@
             });
         }
 
-        // Funciones para eliminar y editar
+        // Función para confirmar eliminación
+        function confirmarEliminar(id) {
+            if (confirm("¿Estás seguro de que deseas eliminar esta experiencia?")) {
+                eliminarExperiencia(id);
+            }
+        }
+
+        // Función para eliminar
         function eliminarExperiencia(id) {
             fetch(`/experiencia/eliminar/${id}`, {
                 method: 'DELETE'
@@ -125,10 +144,22 @@
             });
         }
 
+        // Función para editar
         function editarExperiencia(id) {
-            const nombreApellido = prompt("Ingrese nuevo nombre y apellido:");
-            const comentario = prompt("Ingrese nuevo comentario:");
-            const calificacion = prompt("Ingrese nueva calificación:");
+            $.get(`/experiencia/${id}`, function(exp) {
+                $('#txtNombreApellido').val(exp.Nombre_Apellido);
+                $('#txtComentario').val(exp.Comentario);
+                $('#txtCalificacion').val(exp.Calificacion);
+                $('#frmexperiencias').data('id', id); // Guardar el ID en el formulario
+            });
+        }
+
+        // Función para guardar actualización
+        function guardarActualizacion() {
+            const id = $('#frmexperiencias').data('id');
+            const nombreApellido = $('#txtNombreApellido').val();
+            const comentario = $('#txtComentario').val();
+            const calificacion = $('#txtCalificacion').val();
 
             fetch(`/experiencia/actualizar/${id}`, {
                 method: 'PUT',
