@@ -12,6 +12,15 @@ con = mysql.connector.connect(
     password="dJ0CIAFF="
 )
 
+# Inicializar el cliente de Pusher
+pusher_client = pusher.Pusher(
+    app_id="1714541",
+    key="2df86616075904231311",
+    secret="2f91d936fd43d8e85a1a",
+    cluster="us2",
+    ssl=True
+)
+
 # Ruta principal
 @app.route("/")
 def index():
@@ -38,13 +47,6 @@ def registrar():
         cursor.close()
 
         # Notificar a Pusher
-        pusher_client = pusher.Pusher(
-            app_id="1714541",
-            key="2df86616075904231311",
-            secret="2f91d936fd43d8e85a1a",
-            cluster="us2",
-            ssl=True
-        )
         pusher_client.trigger("canalRegistrosexperiencias", "registroexperiencias", {
             'Nombre_Apellido': nombre_apellido,
             'Comentario': comentario,
@@ -67,7 +69,17 @@ def buscar():
     registros = cursor.fetchall()
     cursor.close()
 
-    return jsonify(registros)
+    # Convertir los registros en una lista de diccionarios
+    experiencias = [
+        {
+            "Id_Experiencia": registro[0],
+            "Nombre_Apellido": registro[1],
+            "Comentario": registro[2],
+            "Calificacion": registro[3]
+        }
+        for registro in registros
+    ]
+    return jsonify(experiencias)
 
 # Ruta para eliminar una experiencia
 @app.route("/experiencia/eliminar/<int:id>", methods=["DELETE"])
@@ -81,13 +93,6 @@ def eliminar_experiencia(id):
     cursor.close()
 
     # Notificar a Pusher
-    pusher_client = pusher.Pusher(
-        app_id="1714541",
-        key="2df86616075904231311",
-        secret="2f91d936fd43d8e85a1a",
-        cluster="us2",
-        ssl=True
-    )
     pusher_client.trigger("canalRegistrosexperiencias", "registroexperiencias", {
         'message': 'Experiencia eliminada'
     })
@@ -115,21 +120,11 @@ def actualizar_experiencia(id):
     cursor.close()
 
     # Notificar a Pusher sobre la actualización
-    pusher_client = pusher.Pusher(
-        app_id="1714541",
-        key="2df86616075904231311",
-        secret="2f91d936fd43d8e85a1a",
-        cluster="us2",
-        ssl=True
-    )
     pusher_client.trigger("canalRegistrosexperiencias", "registroexperiencias", {
         'message': 'Experiencia actualizada'
     })
 
     return jsonify({"status": "success", "message": "Experiencia actualizada correctamente"})
-
-if __name__ == "__main__":
-    app.run(debug=True)
 
 # Ruta para obtener una experiencia específica por ID
 @app.route("/experiencia/<int:id>")
@@ -142,10 +137,15 @@ def obtener_experiencia(id):
     experiencia = cursor.fetchone()
     cursor.close()
 
-    return jsonify({
-        "Id_Experiencia": experiencia[0],
-        "Nombre_Apellido": experiencia[1],
-        "Comentario": experiencia[2],
-        "Calificacion": experiencia[3]
-    })
+    if experiencia:
+        return jsonify({
+            "Id_Experiencia": experiencia[0],
+            "Nombre_Apellido": experiencia[1],
+            "Comentario": experiencia[2],
+            "Calificacion": experiencia[3]
+        })
+    else:
+        return jsonify({"status": "error", "message": "Experiencia no encontrada"}), 404
 
+if __name__ == "__main__":
+    app.run(debug=True)
