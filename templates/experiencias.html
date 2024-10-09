@@ -8,10 +8,11 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
     <script src="https://js.pusher.com/7.0/pusher.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </head>
 <body>
-    <div class="container mt-5">
-        <h1>Registrar Nueva Experiencia</h1>
+    <div class="container">
+        <h1>Registro de Experiencias</h1>
         <form id="frmexperiencias">
             <div class="mb-3">
                 <label for="txtNombreApellido" class="form-label">Nombre y Apellido</label>
@@ -27,108 +28,144 @@
             </div>
             <button type="submit" class="btn btn-primary">Registrar</button>
         </form>
-
-        <h2 class="mt-5">Experiencias Registradas</h2>
-        <table class="table table-bordered mt-3">
+        
+        <h2>Experiencias Registradas</h2>
+        <table class="table">
             <thead>
                 <tr>
                     <th>Nombre y Apellido</th>
                     <th>Comentario</th>
                     <th>Calificación</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
-            <tbody id="tablaExperiencias">
-                <!-- Las experiencias se mostrarán aquí -->
-            </tbody>
+            <tbody id="tbodyexperiencias"></tbody>
         </table>
     </div>
 
+    <!-- Modal for Editing -->
+    <div class="modal fade" id="modalEditar" tabindex="-1" aria-labelledby="modalEditarLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalEditarLabel">Editar Experiencia</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="frmEditar">
+                        <input type="hidden" id="editId" name="editId">
+                        <div class="mb-3">
+                            <label for="editNombreApellido" class="form-label">Nombre y Apellido</label>
+                            <input type="text" class="form-control" id="editNombreApellido" name="editNombreApellido" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editComentario" class="form-label">Comentario</label>
+                            <textarea class="form-control" id="editComentario" name="editComentario" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editCalificacion" class="form-label">Calificación</label>
+                            <input type="number" class="form-control" id="editCalificacion" name="editCalificacion" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Actualizar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Validación del formulario
-        $("#frmexperiencias").validate({
-            messages: {
-                txtNombreApellido: {
-                    required: "Ingresa tu Nombre y Apellido",
-                    minlength: "Ingresa al menos 8 letras",
-                    maxlength: "Ingresa menos de 25 letras"
-                },
-                txtComentario: {
-                    required: "Ingresa una reseña positiva",
-                    minlength: "Ingresa al menos 6 caracteres",
-                    maxlength: "Ingresa menos de 25 caracteres"
-                },
-                txtCalificacion: {
-                    required: "Ingresa una calificación",
-                    digits: "La calificación debe ser un número"
-                }
-            },
-            rules: {
-                txtNombreApellido: {
-                    required: true,
-                    minlength: 8,
-                    maxlength: 25
-                },
-                txtComentario: {
-                    required: true,
-                    minlength: 6,
-                    maxlength: 25
-                },
-                txtCalificacion: {
-                    required: true,
-                    digits: true
-                }
-            }
-        });
+        window.addEventListener("load", function (event) {
+            function buscar() {
+                $.get("/buscar", { timestamp: new Date().getTime() }, function (respuesta) {
+                    $("#tbodyexperiencias").html("");
 
-        // Inicialización de Pusher
-        var pusher = new Pusher("2df86616075904231311", {
-            cluster: "eu" // Actualizado al clúster correcto
-        });
-
-        var channel = pusher.subscribe("canalRegistrosexperiencias");
-        channel.bind("registroexperiencias", function(data) {
-            // Asegúrate de que las claves de data coincidan con las del objeto enviado desde el servidor
-            if (data.Nombre_Apellido && data.Comentario && data.Calificacion) {
-                $("#tablaExperiencias").prepend(`
-                    <tr>
-                        <td>${data.Nombre_Apellido}</td>
-                        <td>${data.Comentario}</td>
-                        <td>${data.Calificacion}</td>
-                    </tr>
-                `);
-            }
-        });
-
-        // Envío del formulario con AJAX
-        $("#frmexperiencias").on("submit", function(e) {
-            e.preventDefault();
-
-            if ($(this).valid()) {
-                let nombreApellido = $("#txtNombreApellido").val();
-                let comentario = $("#txtComentario").val();
-                let calificacion = $("#txtCalificacion").val();
-
-                $.ajax({
-                    url: "/registrar",
-                    method: "POST",
-                    data: {
-                        txtNombreApellido: nombreApellido,
-                        txtComentario: comentario,
-                        txtCalificacion: calificacion
-                    },
-                    success: function(response) {
-                        alert("Experiencia registrada correctamente");
-                        // Limpia el formulario tras registrar
-                        $("#frmexperiencias")[0].reset();
-                    },
-                    error: function(err) {
-                        alert("Error al registrar la experiencia");
+                    for (var x in respuesta) {
+                        var experiencias = respuesta[x];
+                        $("#tbodyexperiencias").append(`
+                            <tr>
+                                <td>${experiencias[1]}</td>
+                                <td>${experiencias[2]}</td>
+                                <td>${experiencias[3]}</td>
+                                <td>
+                                    <button class="btn btn-warning btn-editar" data-id="${experiencias[0]}" data-nombre="${experiencias[1]}" data-comentario="${experiencias[2]}" data-calificacion="${experiencias[3]}">Editar</button>
+                                    <button class="btn btn-danger btn-eliminar" data-id="${experiencias[0]}">Eliminar</button>
+                                </td>
+                            </tr>
+                        `);
                     }
+
+                    // Agregar los eventos para eliminar y editar
+                    $(".btn-eliminar").click(function () {
+                        var id = $(this).data("id");
+                        if (confirm("¿Estás seguro de que deseas eliminar esta experiencia?")) {
+                            $.ajax({
+                                url: "/experiencia/eliminar/" + id,
+                                type: "DELETE",
+                                success: function (respuesta) {
+                                    console.log(respuesta);
+                                    buscar(); // Actualiza la tabla después de eliminar
+                                }
+                            });
+                        }
+                    });
+
+                    $(".btn-editar").click(function () {
+                        var id = $(this).data("id");
+                        var nombre = $(this).data("nombre");
+                        var comentario = $(this).data("comentario");
+                        var calificacion = $(this).data("calificacion");
+
+                        // Llenar el modal con los datos actuales
+                        $("#editId").val(id);
+                        $("#editNombreApellido").val(nombre);
+                        $("#editComentario").val(comentario);
+                        $("#editCalificacion").val(calificacion);
+
+                        // Mostrar el modal
+                        $("#modalEditar").modal("show");
+                    });
                 });
             }
+
+            buscar();
+
+            // Pusher configuration
+            Pusher.logToConsole = true;
+            var pusher = new Pusher("2df86616075904231311", {
+                cluster: "us2"
+            });
+
+            // Event to listen for updates
+            var channel = pusher.subscribe('experiencias-channel');
+            channel.bind('experiencias-updated', function(data) {
+                buscar(); // Refresh the table on update
+            });
+        });
+
+        $("#frmexperiencias").submit(function (event) {
+            event.preventDefault();
+
+            $.post("/registrar", $(this).serialize(), function (respuesta) {
+                console.log(respuesta);
+                buscar(); // Actualiza la tabla después de registrar
+            });
+        });
+
+        $("#frmEditar").submit(function (event) {
+            event.preventDefault();
+
+            var id = $("#editId").val();
+            $.ajax({
+                url: "/experiencia/editar/" + id,
+                type: "PUT",
+                data: $(this).serialize(),
+                success: function (respuesta) {
+                    console.log(respuesta);
+                    buscar(); // Actualiza la tabla después de editar
+                    $("#modalEditar").modal("hide"); // Cierra el modal
+                }
+            });
         });
     </script>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
 </html>
