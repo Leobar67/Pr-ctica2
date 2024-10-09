@@ -26,6 +26,7 @@
             </div>
             <input type="hidden" id="experienciaId" name="experienciaId"> <!-- Campo oculto para el ID -->
             <button type="submit" class="btn btn-primary">Registrar</button>
+            <button type="button" id="btnActualizar" class="btn btn-success" style="display: none;">Actualizar</button> <!-- Botón para actualizar -->
         </form>
 
         <h2 class="mt-5">Experiencias Registradas</h2>
@@ -58,6 +59,11 @@
                 } else {
                     registrarExperiencia(); // Si no, registrar
                 }
+            });
+
+            // Botón de actualizar
+            $('#btnActualizar').on('click', function() {
+                actualizarExperiencia(); // Actualizar la experiencia
             });
 
             // Configuración de Pusher
@@ -104,6 +110,7 @@
                 success: function(response) {
                     if (response.status === 'success') {
                         $('#experienciaForm')[0].reset(); // Reiniciar el formulario
+                        $('#btnActualizar').hide(); // Ocultar botón de actualizar
                         cargarExperiencias(); // Cargar las experiencias nuevamente
                     } else {
                         alert(response.message);
@@ -118,6 +125,7 @@
                 $('#txtComentario').val(data.Comentario);
                 $('#txtCalificacion').val(data.Calificacion);
                 $('#experienciaId').val(id); // Establecer el ID en el campo oculto
+                $('#btnActualizar').show(); // Mostrar botón de actualizar
             });
         }
 
