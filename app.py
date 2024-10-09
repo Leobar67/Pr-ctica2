@@ -24,7 +24,6 @@ def registrar():
     comentario = request.form.get('txtComentario')
     calificacion = request.form.get('txtCalificacion')
 
-    # Validar que los campos no estén vacíos
     if not nombre_apellido or not comentario or not calificacion:
         return jsonify({"status": "error", "message": "Faltan datos"})
 
@@ -38,7 +37,7 @@ def registrar():
         con.commit()
         cursor.close()
 
-        # Notificar a Pusher sobre la nueva experiencia
+        # Notificar a Pusher
         pusher_client = pusher.Pusher(
             app_id="1714541",
             key="2df86616075904231311",
@@ -81,7 +80,7 @@ def eliminar_experiencia(id):
     con.commit()
     cursor.close()
 
-    # Notificar a Pusher sobre la eliminación
+    # Notificar a Pusher
     pusher_client = pusher.Pusher(
         app_id="1714541",
         key="2df86616075904231311",
@@ -98,18 +97,19 @@ def eliminar_experiencia(id):
 # Ruta para actualizar una experiencia
 @app.route("/experiencia/actualizar/<int:id>", methods=["PUT"])
 def actualizar_experiencia(id):
-    nombre_apellido = request.form.get("nombre_apellido")
-    comentario = request.form.get("comentario")
-    calificacion = request.form.get("calificacion")
+    data = request.get_json()  # Cambiado para recibir JSON
+    nombre_apellido = data.get("nombre_apellido")
+    comentario = data.get("comentario")
+    calificacion = data.get("calificacion")
 
     if not con.is_connected():
         con.reconnect()
 
     cursor = con.cursor()
-    cursor.execute("""
+    cursor.execute(""" 
         UPDATE tst0_experiencias 
         SET Nombre_Apellido = %s, Comentario = %s, Calificacion = %s 
-        WHERE Id_Experiencia = %s
+        WHERE Id_Experiencia = %s 
     """, (nombre_apellido, comentario, calificacion, id))
     con.commit()
     cursor.close()
