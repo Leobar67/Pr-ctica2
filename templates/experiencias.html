@@ -3,138 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
-    <script src="https://js.pusher.com/7.0/pusher.min.js"></script>
-
     <title>Experiencias</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <form method="post" id="frmexperiencias" class="formulario">
-            <div class="mb-1">
-                <label for="txtNombreApellido">Nombre y Apellido:</label>
-                <input type="text" name="txtNombreApellido" id="txtNombreApellido" class="form-control" required minlength="8" maxlength="25">
-            </div>
-            <div class="mb-1">
-                <label for="txtComentario">Comentario:</label>
-                <input type="text" name="txtComentario" id="txtComentario" class="form-control" required minlength="6" maxlength="25">
-            </div>
-            <div class="mb-1">
-                <label for="txtCalificacion">Calificación:</label>
-                <input type="number" name="txtCalificacion" id="txtCalificacion" class="form-control" required>
-            </div>
-            <div class="text-end">
-                <button id="btnGuardarFA" name="btnGuardarFA" class="btn btn-dark">Guardar</button>
-            </div>
-        </form>
 
-        <div id="divexperiencias"></div>
-    
-        <table class="table table-sm">
-            <thead>
-                <tr>
-                    <th>Nombre y Apellido</th>
-                    <th>Comentario</th>
-                    <th>Calificación</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody id="tbodyexperiencias"></tbody>
-        </table>
-    </div>
+    <!-- Formulario para registrar una nueva experiencia -->
+    <form id="formRegistrar">
+        <input type="text" id="txtNombreApellido" name="txtNombreApellido" placeholder="Nombre y Apellido">
+        <textarea id="txtComentario" name="txtComentario" placeholder="Comentario"></textarea>
+        <input type="number" id="txtCalificacion" name="txtCalificacion" placeholder="Calificación">
+        <button type="submit">Registrar</button>
+    </form>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <!-- Tabla de experiencias -->
+    <table id="tablaExperiencias">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre y Apellido</th>
+                <th>Comentario</th>
+                <th>Calificación</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Aquí se cargarán las experiencias -->
+        </tbody>
+    </table>
 
     <script>
-        window.addEventListener("load", function (event) {
-            // Validación del formulario
-            $("#frmexperiencias").validate({
-                messages: {
-                    txtNombreApellido: {
-                        required: "Ingresa tu Nombre y Apellido",
-                        minlength: "Ingresa al menos 8 letras",
-                        maxlength: "Ingresa menos de 25 letras",
-                        digits: "Tu nombre no debe llevar números"
-                    },
-                    txtComentario: {
-                        required: "Ingresa una reseña positiva",
-                        minlength: "Ingresa al menos 6 caracteres",
-                        maxlength: "Ingresa menos de 25 caracteres"
-                    },
-                    txtCalificacion: {
-                        required: "Ingresa una calificación",
-                        digits: "La calificación debe ser un número"
-                    }
-                },
-                rules: {
-                    txtNombreApellido: {
-                        required: true,
-                        minlength: 8,
-                        maxlength: 25,
-                        digits: false
-                    },
-                    txtComentario: {
-                        required: true,
-                        minlength: 6,
-                        maxlength: 25
-                    },
-                    txtCalificacion: {
-                        required: true,
-                        digits: true
-                    }
+        // Función para buscar experiencias
+        function buscar() {
+            $.ajax({
+                url: "/buscar",
+                method: "GET",
+                success: function (registros) {
+                    let tabla = '';
+                    registros.forEach(function (exp) {
+                        tabla += `<tr>
+                            <td>${exp[0]}</td>
+                            <td>${exp[1]}</td>
+                            <td>${exp[2]}</td>
+                            <td>${exp[3]}</td>
+                            <td>
+                                <button onclick="eliminarExperiencia(${exp[0]})">Eliminar</button>
+                                <button onclick="editarExperiencia(${exp[0]}, '${exp[1]}', '${exp[2]}', ${exp[3]})">Editar</button>
+                            </td>
+                        </tr>`;
+                    });
+                    $("#tablaExperiencias tbody").html(tabla);
                 }
             });
-
-            // Subida de la experiencia
-            $("#frmexperiencias").submit(function (event) {
-                event.preventDefault();
-
-                $.post("/experiencias/guardar", $(this).serialize(), function (respuesta) {
-                    console.log(respuesta);
-                    buscar();  // Actualiza la lista después de registrar
-                });
-            });
-
-            // Buscar y mostrar las experiencias
-            function buscar() {
-                $.get("/buscar", { timestamp: new Date().getTime() }, function (respuesta) {
-                    $("#tbodyexperiencias").html("");
-                    for (var x in respuesta) {
-                        var experiencia = respuesta[x];
-                        $("#tbodyexperiencias").append(`<tr>
-                            <td>${experiencia[1]}</td>
-                            <td>${experiencia[2]}</td>
-                            <td>${experiencia[3]}</td>
-                            <td>
-                                <button class="btn btn-primary btn-sm" onclick="editarExperiencia(${experiencia[0]}, '${experiencia[1]}', '${experiencia[2]}', ${experiencia[3]})">Editar</button>
-                                <button class="btn btn-danger btn-sm" onclick="eliminarExperiencia(${experiencia[0]})">Eliminar</button>
-                            </td>
-                        </tr>`);
-                    }
-                });
-            }
-
-            buscar();
-
-            // Pusher para actualizaciones en tiempo real
-            Pusher.logToConsole = true;
-            var pusher = new Pusher("2df86616075904231311", {
-                cluster: "us2"
-            });
-
-            var channel = pusher.subscribe("canalRegistrosexperiencias");
-            channel.bind("registroexperiencias", function (experiencias) {
-                buscar();
-            });
-        });
+        }
 
         // Función para eliminar experiencia
         function eliminarExperiencia(id) {
             if (confirm("¿Estás seguro de que deseas eliminar esta experiencia?")) {
+                // Cambiar la URL sin recargar la página
+                window.history.pushState({}, '', `?eliminar/id=${id}`);
+
                 $.ajax({
                     url: `/experiencia/eliminar/${id}`,
                     method: "DELETE",
@@ -148,6 +76,9 @@
 
         // Función para editar experiencia
         function editarExperiencia(id, nombreApellido, comentario, calificacion) {
+            // Cambiar la URL sin recargar la página
+            window.history.pushState({}, '', `?editar/id=${id}`);
+
             let nuevoNombreApellido = prompt("Ingresa el nuevo nombre y apellido:", nombreApellido);
             let nuevoComentario = prompt("Ingresa el nuevo comentario:", comentario);
             let nuevaCalificacion = prompt("Ingresa la nueva calificación:", calificacion);
@@ -156,7 +87,35 @@
                 $.ajax({
                     url: `/experiencia/actualizar/${id}`,
                     method: "PUT",
-                    data: { nombre_apellido: nuevoNombreApellido, comentario: nuevoComentario, calificacion: nuevaCalificacion }, success: function (respuesta) { alert("Experiencia actualizada"); buscar(); } }); } } 
+                    data: {
+                        nombre_apellido: nuevoNombreApellido,
+                        comentario: nuevoComentario,
+                        calificacion: nuevaCalificacion
+                    },
+                    success: function (respuesta) {
+                        alert("Experiencia actualizada");
+                        buscar();
+                    }
+                });
+            }
+        }
+
+        // Función para registrar experiencia
+        $("#formRegistrar").submit(function (event) {
+            event.preventDefault();
+            $.ajax({
+                url: "/registrar",
+                method: "POST",
+                data: $(this).serialize(),
+                success: function (respuesta) {
+                    alert(respuesta.message);
+                    buscar();
+                }
+            });
+        });
+
+        // Inicializar la tabla
+        buscar();
     </script>
 </body>
 </html>
