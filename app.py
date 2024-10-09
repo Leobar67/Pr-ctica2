@@ -24,30 +24,38 @@ def registrar():
     comentario = request.form.get('txtComentario')
     calificacion = request.form.get('txtCalificacion')
 
-    if not con.is_connected():
-        con.reconnect()
+    # Validar que los campos no estén vacíos
+    if not nombre_apellido or not comentario or not calificacion:
+        return jsonify({"status": "error", "message": "Faltan datos"})
 
-    cursor = con.cursor()
-    sql = "INSERT INTO tst0_experiencias (Nombre_Apellido, Comentario, Calificacion) VALUES (%s, %s, %s)"
-    cursor.execute(sql, (nombre_apellido, comentario, calificacion))
-    con.commit()
-    cursor.close()
+    try:
+        if not con.is_connected():
+            con.reconnect()
 
-    # Notificar a Pusher sobre la nueva experiencia
-    pusher_client = pusher.Pusher(
-        app_id="1714541",
-        key="2df86616075904231311",
-        secret="2f91d936fd43d8e85a1a",
-        cluster="us2",
-        ssl=True
-    )
-    pusher_client.trigger("canalRegistrosexperiencias", "registroexperiencias", {
-        'Nombre_Apellido': nombre_apellido,
-        'Comentario': comentario,
-        'Calificacion': calificacion
-    })
+        cursor = con.cursor()
+        sql = "INSERT INTO tst0_experiencias (Nombre_Apellido, Comentario, Calificacion) VALUES (%s, %s, %s)"
+        cursor.execute(sql, (nombre_apellido, comentario, calificacion))
+        con.commit()
+        cursor.close()
 
-    return jsonify({"status": "success", "message": "Experiencia registrada correctamente"})
+        # Notificar a Pusher sobre la nueva experiencia
+        pusher_client = pusher.Pusher(
+            app_id="1714541",
+            key="2df86616075904231311",
+            secret="2f91d936fd43d8e85a1a",
+            cluster="us2",
+            ssl=True
+        )
+        pusher_client.trigger("canalRegistrosexperiencias", "registroexperiencias", {
+            'Nombre_Apellido': nombre_apellido,
+            'Comentario': comentario,
+            'Calificacion': calificacion
+        })
+
+        return jsonify({"status": "success", "message": "Experiencia registrada correctamente"})
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
 
 # Ruta para buscar experiencias
 @app.route("/buscar")
