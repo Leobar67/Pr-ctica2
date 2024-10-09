@@ -43,6 +43,38 @@
         </table>
     </div>
 
+    <!-- Modal para editar experiencia -->
+    <div class="modal fade" id="editarModal" tabindex="-1" role="dialog" aria-labelledby="editarModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editarModalLabel">Editar Experiencia</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="modalNombreApellido">Nombre y Apellido:</label>
+                        <input type="text" class="form-control" id="modalNombreApellido">
+                    </div>
+                    <div class="form-group">
+                        <label for="modalComentario">Comentario:</label>
+                        <textarea class="form-control" id="modalComentario"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalCalificacion">Calificación:</label>
+                        <input type="number" class="form-control" id="modalCalificacion">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" onclick="guardarActualizacion()">Guardar cambios</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Pusher para actualizaciones en tiempo real
         Pusher.logToConsole = true;
@@ -114,13 +146,21 @@
                             <td>${exp[2]}</td>
                             <td>${exp[3]}</td>
                             <td>
-                                <button class="btn btn-warning" onclick="editarExperiencia(${exp[0]})">Editar</button>
+                                <button class="btn btn-warning" onclick="abrirModalEditar(${exp[0]}, '${exp[1]}', '${exp[2]}', ${exp[3]})">Editar</button>
                                 <button class="btn btn-danger" onclick="confirmarEliminar(${exp[0]})">Eliminar</button>
                             </td>
                         </tr>
                     `);
                 });
             });
+        }
+
+        // Función para abrir el modal de edición
+        function abrirModalEditar(id, nombreApellido, comentario, calificacion) {
+            $('#modalNombreApellido').val(nombreApellido);
+            $('#modalComentario').val(comentario);
+            $('#modalCalificacion').val(calificacion);
+            $('#editarModal').data('id', id).modal('show'); // Guardar el ID en el modal
         }
 
         // Función para confirmar eliminación
@@ -140,26 +180,17 @@
                 if (data.status === "success") {
                     alert(data.message);
                     cargarExperiencias();  // Actualizar la tabla después de eliminar
+                    window.history.pushState({}, '', `?eliminar/${id}`); // Cambiar la URL
                 }
-            });
-        }
-
-        // Función para editar
-        function editarExperiencia(id) {
-            $.get(`/experiencia/${id}`, function(exp) {
-                $('#txtNombreApellido').val(exp.Nombre_Apellido);
-                $('#txtComentario').val(exp.Comentario);
-                $('#txtCalificacion').val(exp.Calificacion);
-                $('#frmexperiencias').data('id', id); // Guardar el ID en el formulario
             });
         }
 
         // Función para guardar actualización
         function guardarActualizacion() {
-            const id = $('#frmexperiencias').data('id');
-            const nombreApellido = $('#txtNombreApellido').val();
-            const comentario = $('#txtComentario').val();
-            const calificacion = $('#txtCalificacion').val();
+            const id = $('#editarModal').data('id');
+            const nombreApellido = $('#modalNombreApellido').val();
+            const comentario = $('#modalComentario').val();
+            const calificacion = $('#modalCalificacion').val();
 
             fetch(`/experiencia/actualizar/${id}`, {
                 method: 'PUT',
@@ -173,7 +204,9 @@
                 if (data.status === "success") {
                     alert(data.message);
                     cargarExperiencias();  // Actualizar la tabla después de editar
+                    window.history.pushState({}, '', `?editar/${id}`); // Cambiar la URL
                 }
+                $('#editarModal').modal('hide'); // Cerrar el modal
             });
         }
 
@@ -181,5 +214,8 @@
             cargarExperiencias();  // Cargar experiencias al iniciar
         });
     </script>
+
+    <!-- Scripts de Bootstrap -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
