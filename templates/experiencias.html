@@ -2,220 +2,107 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro de Experiencias</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://js.pusher.com/7.0/pusher.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h1>Registrar Experiencia</h1>
-        <form id="frmexperiencias">
+    <div class="container mt-5">
+        <h1>Registro de Experiencias</h1>
+        <form id="experienciaForm">
             <div class="form-group">
-                <label for="txtNombreApellido">Nombre y Apellido:</label>
+                <label for="txtNombreApellido">Nombre y Apellido</label>
                 <input type="text" class="form-control" id="txtNombreApellido" name="txtNombreApellido" required>
             </div>
             <div class="form-group">
-                <label for="txtComentario">Comentario:</label>
+                <label for="txtComentario">Comentario</label>
                 <textarea class="form-control" id="txtComentario" name="txtComentario" required></textarea>
             </div>
             <div class="form-group">
-                <label for="txtCalificacion">Calificación:</label>
-                <input type="number" class="form-control" id="txtCalificacion" name="txtCalificacion" required>
+                <label for="txtCalificacion">Calificación</label>
+                <input type="number" class="form-control" id="txtCalificacion" name="txtCalificacion" min="1" max="5" required>
             </div>
             <button type="submit" class="btn btn-primary">Registrar</button>
         </form>
 
-        <h2>Experiencias Registradas</h2>
-        <table class="table table-striped" id="tablaExperiencias">
+        <h2 class="mt-5">Experiencias Registradas</h2>
+        <table class="table table-bordered" id="tablaExperiencias">
             <thead>
                 <tr>
+                    <th>ID</th>
                     <th>Nombre y Apellido</th>
                     <th>Comentario</th>
                     <th>Calificación</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
-            <tbody id="experienciasList">
-                <!-- Aquí se llenará la tabla con JavaScript -->
+            <tbody>
+                <!-- Aquí se llenarán las experiencias -->
             </tbody>
         </table>
     </div>
 
-    <!-- Modal para editar experiencia -->
-    <div class="modal fade" id="editarModal" tabindex="-1" role="dialog" aria-labelledby="editarModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editarModalLabel">Editar Experiencia</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="modalNombreApellido">Nombre y Apellido:</label>
-                        <input type="text" class="form-control" id="modalNombreApellido">
-                    </div>
-                    <div class="form-group">
-                        <label for="modalComentario">Comentario:</label>
-                        <textarea class="form-control" id="modalComentario"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="modalCalificacion">Calificación:</label>
-                        <input type="number" class="form-control" id="modalCalificacion">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                    <button type="button" class="btn btn-primary" onclick="guardarActualizacion()">Guardar cambios</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
-        // Pusher para actualizaciones en tiempo real
-        Pusher.logToConsole = true;
-        var pusher = new Pusher("2df86616075904231311", {
-            cluster: "us2" // Asegúrate de que este sea el clúster correcto
-        });
-        var channel = pusher.subscribe('canalRegistrosexperiencias');
-        channel.bind('registroexperiencias', function(data) {
-            cargarExperiencias();  // Recargar experiencias al recibir un evento de Pusher
-            alert(data.message);   // Mostrar el mensaje recibido
+        $(document).ready(function() {
+            // Cargar experiencias al iniciar la página
+            cargarExperiencias();
+
+            // Manejar el envío del formulario
+            $('#experienciaForm').on('submit', function(event) {
+                event.preventDefault(); // Evitar que la página se recargue
+                registrarExperiencia();
+            });
+
+            // Configuración de Pusher
+            var pusher = new Pusher('2df86616075904231311', {
+                cluster: 'us2'
+            });
+            var channel = pusher.subscribe('canalRegistrosexperiencias');
+            channel.bind('registroexperiencias', function(data) {
+                // Actualizar la tabla con la nueva experiencia registrada
+                cargarExperiencias();
+            });
         });
 
-        // Validación del formulario
-        $("#frmexperiencias").validate({
-            messages: {
-                txtNombreApellido: {
-                    required: "Ingresa tu Nombre y Apellido",
-                    minlength: "Ingresa al menos 8 letras",
-                    maxlength: "Ingresa menos de 25 letras"
-                },
-                txtComentario: {
-                    required: "Ingresa una reseña positiva",
-                    minlength: "Ingresa más de 6 caracteres",
-                    maxlength: "Ingresa menos de 250 caracteres"
-                },
-                txtCalificacion: {
-                    required: "Ingresa una calificación",
-                    digits: "La calificación es de solo números"
+        function cargarExperiencias() {
+            $.get('/buscar', function(data) {
+                var tabla = $('#tablaExperiencias tbody');
+                tabla.empty(); // Limpiar la tabla antes de agregar datos
+                data.forEach(function(exp) {
+                    tabla.append('<tr><td>' + exp.Id_Experiencia + '</td><td>' + exp.Nombre_Apellido + '</td><td>' + exp.Comentario + '</td><td>' + exp.Calificacion + '</td><td><button class="btn btn-danger" onclick="eliminarExperiencia(' + exp.Id_Experiencia + ')">Eliminar</button></td></tr>');
+                });
+            });
+        }
+
+        function registrarExperiencia() {
+            var formData = $('#experienciaForm').serialize();
+            $.post('/registrar', formData, function(response) {
+                if (response.status === 'success') {
+                    $('#experienciaForm')[0].reset(); // Reiniciar el formulario
+                    cargarExperiencias(); // Cargar las experiencias nuevamente
+                } else {
+                    alert(response.message);
                 }
-            },
-            rules: {
-                txtNombreApellido: {
-                    required: true,
-                    minlength: 8,
-                    maxlength: 25
-                },
-                txtComentario: {
-                    required: true,
-                    minlength: 6,
-                    maxlength: 250
-                },
-                txtCalificacion: {
-                    required: true,
-                    digits: true
-                }
-            },
-            submitHandler: function(form) {
-                // Enviar datos al servidor
+            });
+        }
+
+        function eliminarExperiencia(id) {
+            if (confirm("¿Estás seguro de que deseas eliminar esta experiencia?")) {
                 $.ajax({
-                    url: '/registrar',
-                    method: 'POST',
-                    data: $(form).serialize(),
+                    url: '/experiencia/eliminar/' + id,
+                    type: 'DELETE',
                     success: function(response) {
-                        alert(response.message);
-                        cargarExperiencias();  // Actualizar la tabla después de registrar
+                        if (response.status === 'success') {
+                            cargarExperiencias(); // Cargar experiencias después de eliminar
+                        } else {
+                            alert(response.message);
+                        }
                     }
                 });
             }
-        });
-
-        // Función para cargar experiencias
-        function cargarExperiencias() {
-            $.get('/buscar', function(data) {
-                $('#experienciasList').empty(); // Limpiar la tabla antes de rellenarla
-                data.forEach(function(exp) {
-                    $('#experienciasList').append(`
-                        <tr>
-                            <td>${exp[1]}</td>
-                            <td>${exp[2]}</td>
-                            <td>${exp[3]}</td>
-                            <td>
-                                <button class="btn btn-warning" onclick="abrirModalEditar(${exp[0]}, '${exp[1]}', '${exp[2]}', ${exp[3]})">Editar</button>
-                                <button class="btn btn-danger" onclick="confirmarEliminar(${exp[0]})">Eliminar</button>
-                            </td>
-                        </tr>
-                    `);
-                });
-            });
         }
-
-        // Función para abrir el modal de edición
-        function abrirModalEditar(id, nombreApellido, comentario, calificacion) {
-            $('#modalNombreApellido').val(nombreApellido);
-            $('#modalComentario').val(comentario);
-            $('#modalCalificacion').val(calificacion);
-            $('#editarModal').data('id', id).modal('show'); // Guardar el ID en el modal
-        }
-
-        // Función para confirmar eliminación
-        function confirmarEliminar(id) {
-            if (confirm("¿Estás seguro de que deseas eliminar esta experiencia?")) {
-                eliminarExperiencia(id);
-            }
-        }
-
-        // Función para eliminar
-        function eliminarExperiencia(id) {
-            fetch(`/experiencia/eliminar/${id}`, {
-                method: 'DELETE'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === "success") {
-                    alert(data.message);
-                    cargarExperiencias();  // Actualizar la tabla después de eliminar
-                    window.history.pushState({}, '', `?eliminar/${id}`); // Cambiar la URL
-                }
-            });
-        }
-
-        // Función para guardar actualización
-        function guardarActualizacion() {
-            const id = $('#editarModal').data('id');
-            const nombreApellido = $('#modalNombreApellido').val();
-            const comentario = $('#modalComentario').val();
-            const calificacion = $('#modalCalificacion').val();
-
-            fetch(`/experiencia/actualizar/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ nombre_apellido: nombreApellido, comentario: comentario, calificacion: calificacion })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === "success") {
-                    alert(data.message);
-                    cargarExperiencias();  // Actualizar la tabla después de editar
-                    window.history.pushState({}, '', `?editar/${id}`); // Cambiar la URL
-                }
-                $('#editarModal').modal('hide'); // Cerrar el modal
-            });
-        }
-
-        $(document).ready(function() {
-            cargarExperiencias();  // Cargar experiencias al iniciar
-        });
     </script>
-
-    <!-- Scripts de Bootstrap -->
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
