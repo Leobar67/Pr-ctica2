@@ -130,3 +130,22 @@ def actualizar_experiencia(id):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+# Ruta para obtener una experiencia específica por ID
+@app.route("/experiencia/<int:id>")
+def obtener_experiencia(id):
+    if not con.is_connected():
+        con.reconnect()
+
+    cursor = con.cursor()
+    cursor.execute("SELECT * FROM tst0_experiencias WHERE Id_Experiencia = %s", (id,))
+    experiencia = cursor.fetchone()
+    cursor.close()
+
+    return jsonify({
+        "Id_Experiencia": experiencia[0],
+        "Nombre_Apellido": experiencia[1],
+        "Comentario": experiencia[2],
+        "Calificacion": experiencia[3]
+    })
+
