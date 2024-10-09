@@ -28,7 +28,7 @@
             </div>
             <button type="submit" class="btn btn-primary">Registrar</button>
         </form>
-        
+
         <h2>Experiencias Registradas</h2>
         <table class="table">
             <thead>
@@ -43,7 +43,7 @@
         </table>
     </div>
 
-    <!-- Modal for Editing -->
+    <!-- Modal para editar -->
     <div class="modal fade" id="modalEditar" tabindex="-1" aria-labelledby="modalEditarLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -74,7 +74,43 @@
     </div>
 
     <script>
-        window.addEventListener("load", function (event) {
+        $(document).ready(function () {
+            // Validación del formulario
+            $("#frmexperiencias").validate({
+                messages: {
+                    txtNombreApellido: {
+                        required: "Ingresa tu Nombre y Apellido",
+                        minlength: "Ingresa al menos 8 letras",
+                        maxlength: "Ingresa menos de 25 letras"
+                    },
+                    txtComentario: {
+                        required: "Ingresa una reseña positiva",
+                        minlength: "Ingresa más de 6 caracteres",
+                        maxlength: "Ingresa menos de 250 caracteres"
+                    },
+                    txtCalificacion: {
+                        required: "Ingresa una calificación",
+                        digits: "La calificación es de solo números"
+                    }
+                },
+                rules: {
+                    txtNombreApellido: {
+                        required: true,
+                        minlength: 8,
+                        maxlength: 25
+                    },
+                    txtComentario: {
+                        required: true,
+                        minlength: 6,
+                        maxlength: 250
+                    },
+                    txtCalificacion: {
+                        required: true,
+                        digits: true
+                    }
+                }
+            });
+
             function buscar() {
                 $.get("/buscar", { timestamp: new Date().getTime() }, function (respuesta) {
                     $("#tbodyexperiencias").html("");
@@ -87,7 +123,7 @@
                                 <td>${experiencias[2]}</td>
                                 <td>${experiencias[3]}</td>
                                 <td>
-                                    <button class="btn btn-warning btn-editar" data-id="${experiencias[0]}" data-nombre="${experiencias[1]}" data-comentario="${experiencias[2]}" data-calificacion="${experiencias[3]}">Editar</button>
+                                    <button class="btn btn-warning btn-editar" data-id="${experiencias[0]}">Editar</button>
                                     <button class="btn btn-danger btn-eliminar" data-id="${experiencias[0]}">Eliminar</button>
                                 </td>
                             </tr>
@@ -111,18 +147,14 @@
 
                     $(".btn-editar").click(function () {
                         var id = $(this).data("id");
-                        var nombre = $(this).data("nombre");
-                        var comentario = $(this).data("comentario");
-                        var calificacion = $(this).data("calificacion");
-
-                        // Llenar el modal con los datos actuales
-                        $("#editId").val(id);
-                        $("#editNombreApellido").val(nombre);
-                        $("#editComentario").val(comentario);
-                        $("#editCalificacion").val(calificacion);
-
-                        // Mostrar el modal
-                        $("#modalEditar").modal("show");
+                        // Obtener los datos de la experiencia para editar
+                        $.get(`/experiencia/${id}`, function (data) {
+                            $("#editId").val(data[0]);
+                            $("#editNombreApellido").val(data[1]);
+                            $("#editComentario").val(data[2]);
+                            $("#editCalificacion").val(data[3]);
+                            $("#modalEditar").modal("show");
+                        });
                     });
                 });
             }
@@ -135,35 +167,29 @@
                 cluster: "us2"
             });
 
-            // Event to listen for updates
-            var channel = pusher.subscribe('experiencias-channel');
-            channel.bind('experiencias-updated', function(data) {
-                buscar(); // Refresh the table on update
-            });
-        });
-
-        $("#frmexperiencias").submit(function (event) {
-            event.preventDefault();
-
-            $.post("/registrar", $(this).serialize(), function (respuesta) {
-                console.log(respuesta);
-                buscar(); // Actualiza la tabla después de registrar
-            });
-        });
-
-        $("#frmEditar").submit(function (event) {
-            event.preventDefault();
-
-            var id = $("#editId").val();
-            $.ajax({
-                url: "/experiencia/editar/" + id,
-                type: "PUT",
-                data: $(this).serialize(),
-                success: function (respuesta) {
+            // Registro de experiencia
+            $("#frmexperiencias").submit(function (event) {
+                event.preventDefault();
+                $.post("/registrar", $(this).serialize(), function (respuesta) {
                     console.log(respuesta);
-                    buscar(); // Actualiza la tabla después de editar
-                    $("#modalEditar").modal("hide"); // Cierra el modal
-                }
+                    buscar(); // Actualiza la tabla después de registrar
+                });
+            });
+
+            // Actualizar experiencia
+            $("#frmEditar").submit(function (event) {
+                event.preventDefault();
+                var id = $("#editId").val();
+                $.ajax({
+                    url: `/experiencia/actualizar/${id}`,
+                    type: "PUT",
+                    data: $(this).serialize(),
+                    success: function (respuesta) {
+                        console.log(respuesta);
+                        buscar(); // Actualiza la tabla después de editar
+                        $("#modalEditar").modal("hide"); // Cierra el modal
+                    }
+                });
             });
         });
     </script>
