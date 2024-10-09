@@ -27,7 +27,19 @@
         </form>
 
         <h2>Experiencias Registradas</h2>
-        <div id="experienciasList"></div>
+        <table class="table table-striped" id="tablaExperiencias">
+            <thead>
+                <tr>
+                    <th>Nombre y Apellido</th>
+                    <th>Comentario</th>
+                    <th>Calificación</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="experienciasList">
+                <!-- Aquí se llenará la tabla con JavaScript -->
+            </tbody>
+        </table>
     </div>
 
     <script>
@@ -42,7 +54,7 @@
                 txtComentario: {
                     required: "Ingresa una reseña positiva",
                     minlength: "Ingresa más de 6 caracteres",
-                    maxlength: "Ingresa menos de 250 caracteres" // Ajuste aquí
+                    maxlength: "Ingresa menos de 250 caracteres"
                 },
                 txtCalificacion: {
                     required: "Ingresa una calificación",
@@ -73,11 +85,31 @@
                     data: $(form).serialize(),
                     success: function(response) {
                         alert(response.message);
-                        // Aquí puedes agregar lógica para actualizar la lista de experiencias
+                        cargarExperiencias();  // Actualizar la tabla después de registrar
                     }
                 });
             }
         });
+
+        // Función para cargar experiencias
+        function cargarExperiencias() {
+            $.get('/buscar', function(data) {
+                $('#experienciasList').empty(); // Limpiar la tabla antes de rellenarla
+                data.forEach(function(exp) {
+                    $('#experienciasList').append(`
+                        <tr>
+                            <td>${exp[1]}</td>
+                            <td>${exp[2]}</td>
+                            <td>${exp[3]}</td>
+                            <td>
+                                <button class="btn btn-warning" onclick="editarExperiencia(${exp[0]})">Editar</button>
+                                <button class="btn btn-danger" onclick="eliminarExperiencia(${exp[0]})">Eliminar</button>
+                            </td>
+                        </tr>
+                    `);
+                });
+            });
+        }
 
         // Funciones para eliminar y editar
         function eliminarExperiencia(id) {
@@ -87,9 +119,8 @@
             .then(response => response.json())
             .then(data => {
                 if (data.status === "success") {
-                    // Actualiza la URL
-                    window.history.pushState({}, '', `https://practica2-k09g.onrender.com?eliminar/id=${id}`);
-                    // Lógica para eliminar el elemento de la UI
+                    alert(data.message);
+                    cargarExperiencias();  // Actualizar la tabla después de eliminar
                 }
             });
         }
@@ -109,24 +140,14 @@
             .then(response => response.json())
             .then(data => {
                 if (data.status === "success") {
-                    // Actualiza la URL
-                    window.history.pushState({}, '', `https://practica2-k09g.onrender.com?editar/id=${id}`);
-                    // Lógica para actualizar el elemento en la UI
+                    alert(data.message);
+                    cargarExperiencias();  // Actualizar la tabla después de editar
                 }
             });
         }
 
-        // Aquí puedes agregar una función para cargar experiencias
-        function cargarExperiencias() {
-            fetch('/buscar')
-                .then(response => response.json())
-                .then(data => {
-                    // Lógica para mostrar experiencias en el div experienciasList
-                });
-        }
-
         $(document).ready(function() {
-            cargarExperiencias();
+            cargarExperiencias();  // Cargar experiencias al iniciar
         });
     </script>
 </body>
