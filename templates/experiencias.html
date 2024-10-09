@@ -24,6 +24,7 @@
                 <label for="txtCalificacion">Calificación</label>
                 <input type="number" class="form-control" id="txtCalificacion" name="txtCalificacion" min="1" max="5" required>
             </div>
+            <input type="hidden" id="experienciaId" name="experienciaId"> <!-- Campo oculto para el ID -->
             <button type="submit" class="btn btn-primary">Registrar</button>
         </form>
 
@@ -52,12 +53,17 @@
             // Manejar el envío del formulario
             $('#experienciaForm').on('submit', function(event) {
                 event.preventDefault(); // Evitar que la página se recargue
-                registrarExperiencia();
+                if ($('#experienciaId').val()) {
+                    actualizarExperiencia(); // Si hay ID, actualizar
+                } else {
+                    registrarExperiencia(); // Si no, registrar
+                }
             });
 
             // Configuración de Pusher
-            var pusher = new Pusher('2df86616075904231311', {
-                cluster: 'us2'
+            Pusher.logToConsole = true; // Para ver los logs de Pusher en la consola
+            var pusher = new Pusher("2df86616075904231311", {
+                cluster: "us2" // Asegúrate de que este sea el clúster correcto
             });
             var channel = pusher.subscribe('canalRegistrosexperiencias');
             channel.bind('registroexperiencias', function(data) {
@@ -71,7 +77,7 @@
                 var tabla = $('#tablaExperiencias tbody');
                 tabla.empty(); // Limpiar la tabla antes de agregar datos
                 data.forEach(function(exp) {
-                    tabla.append('<tr><td>' + exp.Id_Experiencia + '</td><td>' + exp.Nombre_Apellido + '</td><td>' + exp.Comentario + '</td><td>' + exp.Calificacion + '</td><td><button class="btn btn-danger" onclick="eliminarExperiencia(' + exp.Id_Experiencia + ')">Eliminar</button></td></tr>');
+                    tabla.append('<tr><td>' + exp.Id_Experiencia + '</td><td>' + exp.Nombre_Apellido + '</td><td>' + exp.Comentario + '</td><td>' + exp.Calificacion + '</td><td><button class="btn btn-info" onclick="editarExperiencia(' + exp.Id_Experiencia + ')">Editar</button> <button class="btn btn-danger" onclick="eliminarExperiencia(' + exp.Id_Experiencia + ')">Eliminar</button></td></tr>');
                 });
             });
         }
@@ -85,6 +91,33 @@
                 } else {
                     alert(response.message);
                 }
+            });
+        }
+
+        function actualizarExperiencia() {
+            var formData = $('#experienciaForm').serialize();
+            var id = $('#experienciaId').val(); // Obtener el ID del formulario
+            $.ajax({
+                url: '/experiencia/actualizar/' + id,
+                type: 'PUT',
+                data: formData,
+                success: function(response) {
+                    if (response.status === 'success') {
+                        $('#experienciaForm')[0].reset(); // Reiniciar el formulario
+                        cargarExperiencias(); // Cargar las experiencias nuevamente
+                    } else {
+                        alert(response.message);
+                    }
+                }
+            });
+        }
+
+        function editarExperiencia(id) {
+            $.get('/experiencia/' + id, function(data) {
+                $('#txtNombreApellido').val(data.Nombre_Apellido);
+                $('#txtComentario').val(data.Comentario);
+                $('#txtCalificacion').val(data.Calificacion);
+                $('#experienciaId').val(id); // Establecer el ID en el campo oculto
             });
         }
 
